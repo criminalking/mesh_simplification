@@ -3,6 +3,6 @@
 
 
 ##Algorithm
-
+edge-collapse
 
 ##Example

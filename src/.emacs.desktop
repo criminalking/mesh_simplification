@@ -1,0 +1,37 @@
+;; -*- mode: emacs-lisp; coding: emacs-mule; -*-
+;; --------------------------------------------------------------------------
+;; Desktop File for Emacs
+;; --------------------------------------------------------------------------
+;; Created Tue Dec 27 15:59:33 2016
+;; Desktop file format version 206
+;; Emacs version 24.5.1
+
+;; Global section:
+(setq desktop-saved-frameset [frameset 1 (22626 8037 70851 0) (desktop . "206") "lu@ludeMacBook-Pro-2.local" nil nil ((((tool-bar-lines . 0) (vertical-scroll-bars) (frameset--id . "FCA6-4AFF-F787-4A05") (frameset--mini t) (foreground-color . "unspecified-fg") (background-color . "unspecified-bg") (font . "tty") (height . 10) (width . 10) (modeline . t) (minibuffer . t) (unsplittable) (menu-bar-lines . 1)) ((min-height . 8) (min-width . 10) (min-height-ignore . 4) (min-width-ignore . 2) (min-height-safe . 2) (min-width-safe . 2) (min-pixel-height . 8) (min-pixel-width . 10) (min-pixel-height-ignore . 4) (min-pixel-width-ignore . 2) (min-pixel-height-safe . 2) (min-pixel-width-safe . 2)) vc (pixel-width . 10) (pixel-height . 8) (total-width . 10) (total-height . 8) (normal-height . 1.0) (normal-width . 1.0) (combination-limit) (leaf (pixel-width . 10) (pixel-height . 4) (total-width . 10) (total-height . 4) (normal-height . 0.5) (normal-width . 1.0) (buffer "*scratch*" (selected . t) (hscroll . 0) (fringes 0 0 nil) (margins nil) (scroll-bars 0 0 t nil) (vscroll . 0) (dedicated) (point . 37) (start . 1))) (leaf (last . t) (pixel-width . 10) (pixel-height . 4) (total-width . 10) (total-height . 4) (normal-height . 0.5) (normal-width . 1.0) (buffer "*Warnings*" (selected) (hscroll . 0) (fringes 0 0 nil) (margins nil) (scroll-bars 0 0 t nil) (vscroll . 0) (dedicated) (point . 233) (start . 1)))))])
+(setq comint-input-ring nil)
+(setq compile-history nil)
+(setq desktop-missing-file-warning nil)
+(setq extended-command-history '("comment-region" "uncomment-region" "vc-git-grep" "query-replace" "forward-sexp"))
+(setq face-name-history nil)
+(setq file-name-history '("/etc/hosts" "/etc/profile" "/opt/X11/lib/python2.6/site-packages/sitecustomize.py" "~/Documents/caffe/Makefile.config" "~/Documents/caffe/Makefile.config.example" "~/Downloads/libsvm-3.21/svm-predict.c" "~/Downloads/libsvm-3.21/README" "~/.bash_profile" "~/.config/fish/config.fish" "~/Applications/.localized" "/Applications/MATLAB_R2014b.app/toolbox/local/startup.m" "~/.zshrc" "~/.emacs.d/init.el" "~/Documents/projects/others/colorization/models/colorization_train_val_v2.prototxt" "~/Documents/projects/others/colorization/resources/caffe_traininglayers.py" "~/Documents/projects/others/caffe_ilsvrc2012/test.txt" "~/Documents/projects/my/raster_graphics/draw.h" "~/Documents/projects/my/camera_pcl/src/PoseRecognition.h" "~/Documents/projects/my/raster_graphics/main.cpp" "~/Documents/projects/my/same-world/src/gui_game/my_item.cpp" "~/Documents/projects/my/same-world/src/gui_game/my_item.h" "~/Documents/projects/my/raster_graphics/gui_game/my_item.h" "~/Documents/projects/my/raster_graphics/draw.cpp" "~/Documents/‘´ó‘ËÄ‘ÉÏ/‘Ä£‘Ê½‘Ê¶‘±ð/homework/homework1/‘×î‘ÖÕ‘°æ‘±¾/src/process_data.py" "~/Documents/projects/my/raster_graphics/gui_game/my_item.cpp" "~/Documents/projects/my/raster_graphics/gui_game/game.cpp" "~/Documents/projects/my/raster_graphics/gui_game/game.h" "~/Documents/projects/others/gco_python/example.py" "~/Documents/projects/others/gco_c++/GCO_README.TXT" "~/Documents/projects/others/gco_python/gco_python.pyx" "~/Documents/projects/others/hed/examples/hed/HED-tutorial.ipynb" "~/Documents/MATLAB/rgb2gray/test.py" "~/Documents/MatLAB/rgb2gray/HED-BSDS/train/thinning-1.2.3/examples/example.py" "~/Documents/projects/others/hed/examples/hed/deploy.prototxt" "~/Downloads/myself_solver.prototxt" "~/Downloads/myself_train_val.prototxt" "~/Documents/projects/my/messy_ones/compute_GPA.py"))
+(setq grep-find-history nil)
+(setq grep-history '("git --no-pager grep -n -e NNEncode -- *" "git --no-pager grep -n -e NetState -- *"))
+(setq ido-buffer-history '("main" "Imagematting.h" "practice1.py"))
+(setq ido-last-directory-list '(("/Users/lu/Documents/projects/my/raster_graphics/" . "gui_game/") ("/Users/lu/Documents/projects/my/" . "raster_graphics/") ("/Users/lu/Documents/projects/others/colorization/" . "resources/") ("/Users/lu/Documents/projects/others/" . "colorization/") ("/Users/lu/Documents/projects/weak-supervision/wksuper/" . "feature/") ("/Users/lu/Documents/projects/weak-supervision/" . "wksuper/") ("/Users/lu/Documents/projects/" . "my/") ("/Users/lu/Documents/my project/image-matting/" . "Image matting 13/") ("/Users/lu/Documents/my project/" . "image-matting/") ("/Users/lu/Documents/emacs/" . "emacs-learn/") ("/Users/lu/Documents/" . "projects/") ("/Users/lu/" . "Documents/")))
+(setq ido-work-directory-list '("/Users/lu/Documents/projects/my/raster_graphics/gui_game/" "/Users/lu/Documents/projects/my/same-world/src/gui_game/" "/Users/lu/Documents/projects/my/camera_pcl/src/" "/Users/lu/Documents/projects/my/raster_graphics/" "/Users/lu/Documents/projects/others/colorization/resources/" "/Users/lu/Documents/projects/others/colorization/models/" "/Users/lu/Documents/projects/weak-supervision/wksuper/" "/Users/lu/Documents/projects/weak-supervision/wksuper/feature/" "/Users/lu/Documents/caffe/" "/Users/lu/Documents/my project/image-matting/Image matting 13/" "/Users/lu/baba/" "/Users/lu/Documents/my project/video-matting/" "/Users/lu/Documents/python-learn/pchatting-gui/" "/Users/lu/Documents/emacs/emacs-learn/" "/Users/lu/Applications/" "/Users/lu/.emacs.d/"))
+(setq ido-work-file-list '("game.h" "my_item.cpp" "my_item.h" "game.cpp" "PoseRecognition.h" "draw.h" "main.cpp" "anti_aliasing.cpp" "anti_aliasing.h" "draw.cpp"))
+(setq minibuffer-history '("2" "pyflakes tcp.py" "33" "/Library/Frameworks/Python.framework/Versions/2.7/bin/python -q" "/Library/Frameworks/Python.framework/Versions/2.7/bin/python -i" "/Library/Frameworks/Python.framework/Versions/2.7/bin/python -iy" "a"))
+(setq org-clock-history nil)
+(setq org-refile-history nil)
+(setq org-tags-history nil)
+(setq query-replace-history '("qq" "q" "allindices" "w3indices" "allresult" "w3result" "all" "w3" "RC(fmat, index)" "AT(fmat, index, 4)" "GC(fmat, index)" "AT(fmat, index, 3)" "BC(fmat, index)" "AT(fmat, index, 2)" "RC(bmat, index)" "AT(bmat, index, 4)" "GC(bmat, index)" "AT(bmat, index, 3)" "BC(bmat, index)" " AT(bmat, index, 2)" "BC(umat, c)" "AT(umat, c, 2)" "RC(fmat, findex)" "AT(fmat, findex, 4)" "RC(bmat, bindex)" "AT(bmat, bindex, 4)" "RC(umat, c)" "AT(umat, c, 4)" "GC(fmat, findex)" "AT(fmat, findex, 3)" "GC(bmat, bindex)" "AT(bmat, bindex, 3)" "GC(umat, c)" "AT(umat, c, 3)" "(AT(umat, c, 3)" "BC(fmat, findex)" "AT(fmat, findex, 2)" "BC(bmat, bindex)" "AT(bmat, bindex, 2)" "" "	"))
+(setq read-expression-history nil)
+(setq regexp-history nil)
+(setq regexp-search-ring nil)
+(setq register-alist nil)
+(setq search-ring '("50" "last" "mousem" "dr" "anti" "color" "drawp" "answer" "abs" "draw" "scene" "eps" "nnencode" "3_3" "data_l"))
+(setq shell-command-history nil)
+(setq tags-file-name nil)
+(setq tags-table-list nil)
+
+;; Buffer section -- buffers listed in same order as in buffer list:
