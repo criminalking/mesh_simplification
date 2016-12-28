@@ -21,7 +21,6 @@ struct Pairs
 
 struct Plane
 {
-
   Matrix4f Kp;
 };
 
@@ -42,13 +41,19 @@ class CPairContraction
         int v2_index = m_pTriangleList[i][1];
         int v3_index = m_pTriangleList[i][2];
         plane[i].Kp = ComputeP(m_pVertexList[v1_index], m_pVertexList[v2_index], m_pVertexList[v3_index]);
-        vertex[v1_index].Q = vertex[v1_index].Q + plane[i].Kp;
-        vertex[v2_index].Q = vertex[v2_index].Q + plane[i].Kp;
-        vertex[v3_index].Q = vertex[v3_index].Q + plane[i].Kp;
+        vertex[v1_index].Q += plane[i].Kp;
+        vertex[v2_index].Q += plane[i].Kp;
+        vertex[v3_index].Q += plane[i].Kp;
       }
   }
 
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
+
+  // for test
+  void PrintMatrix(Matrix4f M) {
+    for (int i = 0; i < 16; ++i)
+      std::cout << M(i) << "   ";
+  }
 
 
  private:
