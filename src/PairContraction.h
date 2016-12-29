@@ -3,25 +3,30 @@
 #include "SimpleObject.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <list>
 
 using namespace Eigen;
 
-struct Vertex
+struct Vertex // for write
 {
   Vector4f v; // value of this vertex
-  Matrix4f Q; // every vertex has a Q
+  Matrix4f Q; // Q
+  std::list<int> friend_index; // another vertex of a pair including this vertex
+  bool is_active; // true: simplified model should include this vertex
 };
 
 struct Pairs
 {
-  Vertex v1, v2;
-  Vertex v;
-  float cost;
+  int v1_index, v2_index; // TODO: could only save index
+  float cost; // TODO: add Vertex v???
+  int triangle_index[2]; // index of triangle including these two vertexes, size should be 2
 };
 
-struct Plane
+struct Plane // for write
 {
+  int vertex_index[3]; // index of vertexes of this triangle
   Matrix4f Kp;
+  bool is_active; //true: simplified model should include this plane
 };
 
 class CPairContraction
@@ -40,14 +45,20 @@ class CPairContraction
         int v1_index = m_pTriangleList[i][0];
         int v2_index = m_pTriangleList[i][1];
         int v3_index = m_pTriangleList[i][2];
+        plane[i].vertex_index[0] = v1_index;
+        plane[i].vertex_index[1] = v2_index;
+        plane[i].vertex_index[2] = v3_index;
         plane[i].Kp = ComputeP(m_pVertexList[v1_index], m_pVertexList[v2_index], m_pVertexList[v3_index]);
         vertex[v1_index].Q += plane[i].Kp;
         vertex[v2_index].Q += plane[i].Kp;
         vertex[v3_index].Q += plane[i].Kp;
       }
   }
-
+  void SelectPairs();
+  float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
+  void AddToHeap(Pairs pair); // add pairs to minimum heap
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
+
 
   // for test
   void PrintMatrix(Matrix4f M) {
