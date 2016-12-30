@@ -27,6 +27,26 @@ float CPairContraction::ComputeCost(Matrix4f Q1, Matrix4f Q2)
   return cost;
 }
 
+void CPairContraction::AddToHeap(Pairs pair)
+{
+
+}
+
+void CPairContraction::BuildHeap()
+{
+
+}
+
+void CPairContraction::Iteration(float ratio)
+{
+  int iter_num = ceil((1 - ratio) * m_nTriangles / 2);
+  for (int i = 0; i < iter_num; ++i)
+    {
+
+
+    }
+}
+
 void CPairContraction::SelectPairs()
 {
   for (int i = 0; i < m_nTriangles; ++i)
@@ -39,9 +59,9 @@ void CPairContraction::SelectPairs()
         {
           if (!vertex[v1_index].friend_index.empty()) // list is not empty
             {
+              // search if v2 in lists
 
-
-              // if (v1, v2) exist, detect v3 in triangle_index or not
+              // if v2 in lists, detect v3 in triangle_index or not
 
             }
           else
@@ -51,7 +71,7 @@ void CPairContraction::SelectPairs()
               pair.v2_index = v2_index;
               pair.triangle_index[0] = v3_index;
               pair.cost = ComputeCost(vertex[v1_index].Q, vertex[v2_index].Q);
-              AddToHeap(pair);
+              AddToHeap(pair); // add this pairs to heap
             }
         }
       else // go to v2

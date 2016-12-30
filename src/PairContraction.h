@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <math.h>
 #include "SimpleObject.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -25,7 +26,6 @@ struct Pairs
 struct Plane // for write
 {
   int vertex_index[3]; // index of vertexes of this triangle
-  Matrix4f Kp;
   bool is_active; //true: simplified model should include this plane
 };
 
@@ -48,16 +48,19 @@ class CPairContraction
         plane[i].vertex_index[0] = v1_index;
         plane[i].vertex_index[1] = v2_index;
         plane[i].vertex_index[2] = v3_index;
-        plane[i].Kp = ComputeP(m_pVertexList[v1_index], m_pVertexList[v2_index], m_pVertexList[v3_index]);
-        vertex[v1_index].Q += plane[i].Kp;
-        vertex[v2_index].Q += plane[i].Kp;
-        vertex[v3_index].Q += plane[i].Kp;
+        Matrix4f Kp = ComputeP(m_pVertexList[v1_index], m_pVertexList[v2_index], m_pVertexList[v3_index]);
+        vertex[v1_index].Q += Kp;
+        vertex[v2_index].Q += Kp;
+        vertex[v3_index].Q += Kp;
       }
   }
   void SelectPairs();
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
   void AddToHeap(Pairs pair); // add pairs to minimum heap
+  void BuildHeap(); // build pairs heap
+  void Iteration(float ratio); // ratio of area
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
+  void RefreshIndex(); // refresh index of vertexes and planes(for write model)
 
 
   // for test
