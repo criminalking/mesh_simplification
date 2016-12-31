@@ -47,12 +47,12 @@ void CPairContraction::Iteration(float ratio)
     }
 }
 
-void CPairContraction::CreatePairs(int v1_index, int v2_index, int v3_index)
+void CPairContraction::CreatePairs(int v1_index, int v2_index, int index)
 {
   Pairs pair;
   pair.v1_index = v1_index;
   pair.v2_index = v2_index;
-  pair.triangle_index[0] = v3_index;
+  pair.triangle_index[0] = index;
   pair.cost = ComputeCost(vertexes[v1_index].Q, vertexes[v2_index].Q);
   pairs.push_back(pair);
 }
@@ -69,25 +69,28 @@ void CPairContraction::SelectPairs()
       if (!vertexes[v1_index].friend_index.empty()) // list is not empty
         {
           // search if v2 in lists
-          std::list<int>::iterator iter = std::find (vertexes[v1_index].friend_index.begin(), vertexes[v1_index].friend_index.end(), v2_index);
+          std::vector<int>::iterator iter = std::find (vertexes[v1_index].friend_index.begin(), vertexes[v1_index].friend_index.end(), v2_index);
           if (iter == vertexes[v1_index].friend_index.end()) // not find v2
             {
-              vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'frined_index
-              vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'frined_index
-              CreatePairs(v1_index, v2_index, v3_index);
+              vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
+              vertexes[v1_index].pairs_index.push_back(pairs.size());
+              vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'friend_index
+              vertexes[v2_index].pairs_index.push_back(pairs.size());
+              CreatePairs(v1_index, v2_index, i);
             }
-          else // find v2, detect v3 in triangle_index or not
+          else // find v2, add plane_index in triangle_index
             {
-
-
+              int index = std::distance(vertexes[v1_index].friend_index.begin(), iter); // index of this friend in this Vertex
+              pairs[vertexes[v1_index].pairs_index[index]].triangle_index[1] = i;
             }
-
         }
       else
         {
-          vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'frined_index
-          vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'frined_index
-          CreatePairs(v1_index, v2_index, v3_index);
+          vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
+          vertexes[v1_index].pairs_index.push_back(pairs.size());
+          vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'friend_index
+          vertexes[v2_index].pairs_index.push_back(pairs.size());
+          CreatePairs(v1_index, v2_index, i);
         }
     }
 

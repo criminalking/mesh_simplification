@@ -4,7 +4,6 @@
 #include "SimpleObject.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <list>
 #include <vector>
 
 using namespace Eigen;
@@ -13,8 +12,8 @@ struct Vertex // for write
 {
   Vector4f v; // value of this vertex
   Matrix4f Q; // Q
-  std::list<int> friend_index; // another vertex of a pair including this vertex
-  std::list<int> pairs_index; // index of pairs including vertex and friend vertex
+  std::vector<int> friend_index; // another vertex of a pair including this vertex
+  std::vector<int> pairs_index; // index of pairs including vertex and friend vertex
   bool is_active; // true: simplified model should include this vertex
 };
 
@@ -62,7 +61,7 @@ class CPairContraction
   }
   void SelectPairs();
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
-  void CreatePairs(int v1, int v2, int v3); // add(v1, v2), v3 is another vertex
+  void CreatePairs(int v1, int v2, int index); // add(v1, v2), index is index of this triangle
   void AddToHeap(Pairs pair); // add pairs to minimum heap
   void BuildHeap(); // build pairs heap
   void Iteration(float ratio); // ratio of area
