@@ -47,44 +47,49 @@ void CPairContraction::Iteration(float ratio)
     }
 }
 
+void CPairContraction::CreatePairs(int v1_index, int v2_index, int v3_index)
+{
+  Pairs pair;
+  pair.v1_index = v1_index;
+  pair.v2_index = v2_index;
+  pair.triangle_index[0] = v3_index;
+  pair.cost = ComputeCost(vertexes[v1_index].Q, vertexes[v2_index].Q);
+  pairs.push_back(pair);
+}
+
 void CPairContraction::SelectPairs()
 {
   for (int i = 0; i < m_nTriangles; ++i)
     {
-      int v1_index = plane[i].vertex_index[0];
-      int v2_index = plane[i].vertex_index[1];
-      int v3_index = plane[i].vertex_index[2];
-      // add v1 && v2
-      if (vertex[v1_index].friend_index.size() < vertex[v2_index].friend_index.size()) // go to v1
+      int v1_index = planes[i].vertex_index[0];
+      int v2_index = planes[i].vertex_index[1];
+      int v3_index = planes[i].vertex_index[2];
+      // add v1 && v2, go to v1
+      // TODO: compare length of v1 and v2, choose shorter one
+      if (!vertexes[v1_index].friend_index.empty()) // list is not empty
         {
-          if (!vertex[v1_index].friend_index.empty()) // list is not empty
+          // search if v2 in lists
+          std::list<int>::iterator iter = std::find (vertexes[v1_index].friend_index.begin(), vertexes[v1_index].friend_index.end(), v2_index);
+          if (iter == vertexes[v1_index].friend_index.end()) // not find v2
             {
-              // search if v2 in lists
+              vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'frined_index
+              vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'frined_index
+              CreatePairs(v1_index, v2_index, v3_index);
+            }
+          else // find v2, detect v3 in triangle_index or not
+            {
 
-              // if v2 in lists, detect v3 in triangle_index or not
 
             }
-          else
-            {
-              Pairs pair;
-              pair.v1_index = v1_index;
-              pair.v2_index = v2_index;
-              pair.triangle_index[0] = v3_index;
-              pair.cost = ComputeCost(vertex[v1_index].Q, vertex[v2_index].Q);
-              AddToHeap(pair); // add this pairs to heap
-            }
+
         }
-      else // go to v2
+      else
         {
-          if (!vertex[v2_index].friend_index.empty()) // list is not empty
-            {
-
-            }
-          else
-            {
-
-            }
+          vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'frined_index
+          vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'frined_index
+          CreatePairs(v1_index, v2_index, v3_index);
         }
+    }
 
 
       // add v2 && v3

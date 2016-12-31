@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <list>
+#include <vector>
 
 using namespace Eigen;
 
@@ -13,6 +14,7 @@ struct Vertex // for write
   Vector4f v; // value of this vertex
   Matrix4f Q; // Q
   std::list<int> friend_index; // another vertex of a pair including this vertex
+  std::list<int> pairs_index; // index of pairs including vertex and friend vertex
   bool is_active; // true: simplified model should include this vertex
 };
 
@@ -33,29 +35,34 @@ class CPairContraction
 {
  public:
  CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList): m_nVertices(m_nVertices), m_nTriangles(m_nTriangles) {
-    vertex = new Vertex[m_nVertices];
     for (int i = 0; i < m_nVertices; ++i)
       {
-        vertex[i].v << m_pVertexList[i][0], m_pVertexList[i][1], m_pVertexList[i][2], 1.0;
-        vertex[i].Q = Matrix4f::Zero(); // initialize Q
+        Vertex vertex;
+        vertex.v << m_pVertexList[i][0], m_pVertexList[i][1], m_pVertexList[i][2], 1.0;
+        vertex.Q = Matrix4f::Zero(); // initialize Q
+        vertex.is_active = true;
+        vertexes.push_back(vertex);
       }
-    plane = new Plane[m_nTriangles];
     for (int i = 0; i < m_nTriangles; ++i)
       {
+        Plane plane;
         int v1_index = m_pTriangleList[i][0];
         int v2_index = m_pTriangleList[i][1];
         int v3_index = m_pTriangleList[i][2];
-        plane[i].vertex_index[0] = v1_index;
-        plane[i].vertex_index[1] = v2_index;
-        plane[i].vertex_index[2] = v3_index;
+        plane.vertex_index[0] = v1_index;
+        plane.vertex_index[1] = v2_index;
+        plane.vertex_index[2] = v3_index;
+        plane.is_active = true;
+        planes.push_back(plane);
         Matrix4f Kp = ComputeP(m_pVertexList[v1_index], m_pVertexList[v2_index], m_pVertexList[v3_index]);
-        vertex[v1_index].Q += Kp;
-        vertex[v2_index].Q += Kp;
-        vertex[v3_index].Q += Kp;
+        vertexes[v1_index].Q += Kp;
+        vertexes[v2_index].Q += Kp;
+        vertexes[v3_index].Q += Kp;
       }
   }
   void SelectPairs();
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
+  void CreatePairs(int v1, int v2, int v3); // add(v1, v2), v3 is another vertex
   void AddToHeap(Pairs pair); // add pairs to minimum heap
   void BuildHeap(); // build pairs heap
   void Iteration(float ratio); // ratio of area
@@ -73,7 +80,7 @@ class CPairContraction
  private:
   int m_nVertices;
   int m_nTriangles;
-  Plane *plane;
-  Vertex *vertex;
-  Pairs *pairs;
+  std::vector<Plane> planes;
+  std::vector<Vertex> vertexes;
+  std::vector<Pairs> pairs;
 };
