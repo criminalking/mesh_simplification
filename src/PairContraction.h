@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <vector>
+#include <queue>          // std::priority_queue
 
 using namespace Eigen;
 
@@ -62,6 +63,7 @@ class CPairContraction
   void SelectPairs();
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
   void CreatePairs(int v1, int v2, int index); // add(v1, v2), index is index of this triangle
+  void AddPairs(int v1_index, int v2_index, int triangle_index); //
   void AddToHeap(Pairs pair); // add pairs to minimum heap
   void BuildHeap(); // build pairs heap
   void Iteration(float ratio); // ratio of area

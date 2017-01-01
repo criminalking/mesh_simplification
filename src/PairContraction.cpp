@@ -57,6 +57,37 @@ void CPairContraction::CreatePairs(int v1_index, int v2_index, int index)
   pairs.push_back(pair);
 }
 
+void CPairContraction::AddPairs(int v1_index, int v2_index, int triangle_index)
+{
+  if (!vertexes[v1_index].friend_index.empty()) // list is not empty
+    {
+      // search if v2 in lists
+      std::vector<int>::iterator iter = std::find (vertexes[v1_index].friend_index.begin(), vertexes[v1_index].friend_index.end(), v2_index);
+      if (iter == vertexes[v1_index].friend_index.end()) // not find v2
+        {
+          vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
+          vertexes[v1_index].pairs_index.push_back(pairs.size());
+          vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'friend_index
+          vertexes[v2_index].pairs_index.push_back(pairs.size());
+          CreatePairs(v1_index, v2_index, triangle_index);
+        }
+      else // find v2, add plane_index in triangle_index
+        {
+          int index = std::distance(vertexes[v1_index].friend_index.begin(), iter); // index of this friend in this Vertex
+          pairs[vertexes[v1_index].pairs_index[index]].triangle_index[1] = triangle_index;
+        }
+    }
+  else
+    {
+      vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
+      vertexes[v1_index].pairs_index.push_back(pairs.size());
+      vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'friend_index
+      vertexes[v2_index].pairs_index.push_back(pairs.size());
+      CreatePairs(v1_index, v2_index, triangle_index);
+    }
+
+}
+
 void CPairContraction::SelectPairs()
 {
   for (int i = 0; i < m_nTriangles; ++i)
@@ -66,39 +97,10 @@ void CPairContraction::SelectPairs()
       int v3_index = planes[i].vertex_index[2];
       // add v1 && v2, go to v1
       // TODO: compare length of v1 and v2, choose shorter one
-      if (!vertexes[v1_index].friend_index.empty()) // list is not empty
-        {
-          // search if v2 in lists
-          std::vector<int>::iterator iter = std::find (vertexes[v1_index].friend_index.begin(), vertexes[v1_index].friend_index.end(), v2_index);
-          if (iter == vertexes[v1_index].friend_index.end()) // not find v2
-            {
-              vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
-              vertexes[v1_index].pairs_index.push_back(pairs.size());
-              vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'friend_index
-              vertexes[v2_index].pairs_index.push_back(pairs.size());
-              CreatePairs(v1_index, v2_index, i);
-            }
-          else // find v2, add plane_index in triangle_index
-            {
-              int index = std::distance(vertexes[v1_index].friend_index.begin(), iter); // index of this friend in this Vertex
-              pairs[vertexes[v1_index].pairs_index[index]].triangle_index[1] = i;
-            }
-        }
-      else
-        {
-          vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
-          vertexes[v1_index].pairs_index.push_back(pairs.size());
-          vertexes[v2_index].friend_index.push_back(v1_index); // add v1 to v2'friend_index
-          vertexes[v2_index].pairs_index.push_back(pairs.size());
-          CreatePairs(v1_index, v2_index, i);
-        }
-    }
-
-
-      // add v2 && v3
-
-
-
-      // add v1 && v3
+      AddPairs(v1_index, v2_index, i);
+      // add v1 && v3, go to v1
+      AddPairs(v1_index, v3_index, i);
+      // add v2 && v3, go to v2
+      AddPairs(v2_index, v3_index, i);
     }
 }
