@@ -9,8 +9,6 @@
 
 using namespace Eigen;
 
-typedef std::priority_queue<int,std::vector<Pairs>,mycomparison> Heap;
-
 struct Vertex // for write
 {
   Vector4f v; // value of this vertex
@@ -44,6 +42,7 @@ public:
   }
 };
 
+typedef std::priority_queue<float,std::vector<Pairs>,mycomparison> Heap;
 
 class CPairContraction
 {

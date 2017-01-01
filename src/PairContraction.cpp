@@ -48,10 +48,20 @@ void CPairContraction::Iteration()
         }
       else
         {
+          Pairs pair = heap.top();
           heap.pop(); // delete the top element
+          int v1_index = pair.v1_index;
+          int v2_index = pair.v2_index;
+          // refresh heap
 
 
 
+
+          //refresh vertex
+          vertexes[v2_index].is_active = false;
+          //refresh plane
+          planes[pair.triangle_index[0]].is_active = false;
+          planes[pair.triangle_index[1]].is_active = false;
         }
     }
 }
