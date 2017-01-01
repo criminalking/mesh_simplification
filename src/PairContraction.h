@@ -9,6 +9,8 @@
 
 using namespace Eigen;
 
+typedef std::priority_queue<int,std::vector<Pairs>,mycomparison> Heap;
+
 struct Vertex // for write
 {
   Vector4f v; // value of this vertex
@@ -30,6 +32,18 @@ struct Plane // for write
   int vertex_index[3]; // index of vertexes of this triangle
   bool is_active; //true: simplified model should include this plane
 };
+
+
+class mycomparison
+{
+public:
+  mycomparison() {}
+  bool operator() (const Pairs& lhs, const Pairs&rhs) const
+  {
+    return (lhs.cost>rhs.cost);
+  }
+};
+
 
 class CPairContraction
 {
@@ -84,6 +98,6 @@ class CPairContraction
   std::vector<Plane> planes; // all planes
   std::vector<Vertex> vertexes; // all vertexes
   std::vector<Pairs> pairs; // all pairs
-  std::priority_queue<Pairs> heap; // minimum cost is always on the top
+  Heap heap; // minimum cost is always on the top
   float ratio; // ratio of area
 };

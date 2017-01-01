@@ -41,8 +41,18 @@ void CPairContraction::Iteration()
   int iter_num = ceil((1 - ratio) * m_nTriangles / 2);
   for (int i = 0; i < iter_num; ++i)
     {
+      if (heap.empty())
+        {
+          std::cout << "Heap is empty now! Maybe some errors!\n";
+          exit(1);
+        }
+      else
+        {
+          heap.pop(); // delete the top element
 
 
+
+        }
     }
 }
 
