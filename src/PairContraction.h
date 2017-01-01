@@ -34,7 +34,7 @@ struct Plane // for write
 class CPairContraction
 {
  public:
- CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList): m_nVertices(m_nVertices), m_nTriangles(m_nTriangles) {
+ CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList, float ratio): m_nVertices(m_nVertices), m_nTriangles(m_nTriangles), ratio(ratio) {
     for (int i = 0; i < m_nVertices; ++i)
       {
         Vertex vertex;
@@ -64,12 +64,12 @@ class CPairContraction
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
   void CreatePairs(int v1, int v2, int index); // add(v1, v2), index is index of this triangle
   void AddPairs(int v1_index, int v2_index, int triangle_index); //
-  void AddToHeap(Pairs pair); // add pairs to minimum heap
   void BuildHeap(); // build pairs heap
-  void Iteration(float ratio); // ratio of area
+  void Iteration();
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
   void RefreshIndex(); // refresh index of vertexes and planes(for write model)
 
+  void Run();
 
   // for test
   void PrintMatrix(Matrix4f M) {
@@ -81,7 +81,9 @@ class CPairContraction
  private:
   int m_nVertices;
   int m_nTriangles;
-  std::vector<Plane> planes;
-  std::vector<Vertex> vertexes;
-  std::vector<Pairs> pairs;
+  std::vector<Plane> planes; // all planes
+  std::vector<Vertex> vertexes; // all vertexes
+  std::vector<Pairs> pairs; // all pairs
+  std::priority_queue<Pairs> heap; // minimum cost is always on the top
+  float ratio; // ratio of area
 };

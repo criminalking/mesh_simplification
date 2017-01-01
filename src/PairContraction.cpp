@@ -27,17 +27,16 @@ float CPairContraction::ComputeCost(Matrix4f Q1, Matrix4f Q2)
   return cost;
 }
 
-void CPairContraction::AddToHeap(Pairs pair)
-{
-
-}
-
 void CPairContraction::BuildHeap()
 {
-
+  // use priority queues to build a pairs heap
+  for (size_t i = 0; i < pairs.size(); ++i)
+    {
+      heap.push(pairs[i]);
+    }
 }
 
-void CPairContraction::Iteration(float ratio)
+void CPairContraction::Iteration()
 {
   int iter_num = ceil((1 - ratio) * m_nTriangles / 2);
   for (int i = 0; i < iter_num; ++i)
@@ -85,7 +84,6 @@ void CPairContraction::AddPairs(int v1_index, int v2_index, int triangle_index)
       vertexes[v2_index].pairs_index.push_back(pairs.size());
       CreatePairs(v1_index, v2_index, triangle_index);
     }
-
 }
 
 void CPairContraction::SelectPairs()
@@ -103,4 +101,13 @@ void CPairContraction::SelectPairs()
       // add v2 && v3, go to v2
       AddPairs(v2_index, v3_index, i);
     }
+}
+
+void CPairContraction::Run()
+{
+  SelectPairs();
+  BuildHeap();
+  Iteration();
+  RefreshIndex();
+  // output obj with vertexes and planes
 }
