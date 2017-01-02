@@ -75,6 +75,7 @@ class CPairContraction
   }
   void SelectPairs();
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
+  Vector4f ComputeV(Matrix4f Q); // compute new v
   void CreatePairs(int v1, int v2, int index); // add(v1, v2), index is index of this triangle
   void AddPairs(int v1_index, int v2_index, int triangle_index); //
   void BuildHeap(); // build pairs heap

@@ -14,14 +14,20 @@ Matrix4f CPairContraction::ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, Simp
   return Kp;
 }
 
-float CPairContraction::ComputeCost(Matrix4f Q1, Matrix4f Q2)
+Vector4f CPairContraction::ComputeV(Matrix4f Q)
 {
   // compute v
-  Matrix4f Q = Q1 + Q2;
   Matrix4f M;
   M << Q(1,1), Q(1,2), Q(1,3), Q(1,4), Q(1,2), Q(2,2), Q(2,3), Q(2,4), Q(1,3), Q(2,3), Q(3,3), Q(3,4), 0, 0, 0, 1;
   Vector4f vec(0,0,0,1);
   Vector4f v = M.inverse() * vec; // TODO: if invertible
+  return v;
+}
+
+float CPairContraction::ComputeCost(Matrix4f Q1, Matrix4f Q2)
+{
+  Matrix4f Q = Q1 + Q2;
+  Vector4f v = ComputeV(Q);
   // compute cost
   float cost = v.transpose() * Q * v;
   return cost;
@@ -57,11 +63,41 @@ void CPairContraction::Iteration()
 
 
 
-          //refresh vertex
+          //refresh vertex, modify friend_index/pairs_index
           vertexes[v2_index].is_active = false;
-          //refresh plane
+          vertexes[v1_index].Q += vertexes[v2_index].Q;
+          vertexes[v1_index].v = ComputeV(vertexes[v1_index].Q);
+          for (int k = 0; k < vertexes[v2_index].friend_index.size(); ++k)
+            {
+              int index = vertexes[v2_index].friend_index[k];
+              int m = 0;
+              while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
+              if (m == vertexes[index].friend_index.size())
+                {
+                  std::cout << "Cannot find v2 in friend_index, maybe some errors...";
+                  exit(1);
+                }
+              vertexes[index].friend_index.erase (vertexes[index].friend_index.begin() + m);
+              vertexes[index].pairs_index.erase (vertexes[index].pairs_index.begin() + m);
+            }
+
+          //refresh plane (one iteration decrease two planes, one vertex)
           planes[pair.triangle_index[0]].is_active = false;
           planes[pair.triangle_index[1]].is_active = false;
+          //modify all planes including v2_index to v1_index
+          for (int j = 0; j < vertexes[v2_index].pairs_index.size(); ++j)
+            {
+              if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].is_active == true) // not deleted triangles
+                {
+                  for (int k = 0; k < 3; ++k)
+                    if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].vertex_index[k] == v2_index) planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].vertex_index[k] = v1_index;
+                }
+              if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].is_active == true) // not deleted triangles
+                {
+                  for (int k = 0; k < 3; ++k)
+                    if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].vertex_index[k] == v2_index) planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].vertex_index[k] = v1_index;
+                }
+            }
         }
     }
 }
