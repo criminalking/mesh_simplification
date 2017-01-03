@@ -18,9 +18,13 @@ Vector4f CPairContraction::ComputeV(Matrix4f Q)
 {
   // compute v
   Matrix4f M;
-  M << Q(1,1), Q(1,2), Q(1,3), Q(1,4), Q(1,2), Q(2,2), Q(2,3), Q(2,4), Q(1,3), Q(2,3), Q(3,3), Q(3,4), 0, 0, 0, 1;
+  M << Q(0,0), Q(0,1), Q(0,2), Q(0,3), Q(0,1), Q(1,1), Q(1,2), Q(1,3), Q(0,2), Q(1,2), Q(2,2), Q(2,3), 0, 0, 0, 1;
   Vector4f vec(0,0,0,1);
-  Vector4f v = M.inverse() * vec; // TODO: if invertible
+  float determinant = M.determinant();
+  Vector4f v;
+  if (determinant > 1e-6) // not singular
+    v = M.inverse() * vec;
+  else Error("Matrix is singular!!!\n"); // TODO: if singular, how should do?
   return v;
 }
 
@@ -44,8 +48,7 @@ void CPairContraction::BuildHeap()
 
 void CPairContraction::Iteration()
 {
-  int iter_num = ceil((1 - ratio) * m_nTriangles / 2); // TODO: need modify, some edge only have one plane
-  for (int i = 0; i < iter_num; ++i)
+  while(m_nTriangles > m_nTriangles_new)
     {
       if (heap.empty())
         {
@@ -54,18 +57,20 @@ void CPairContraction::Iteration()
         }
       else
         {
-          Pairs pair = heap.top();
+          Pairs pair_delete = heap.top();
           heap.pop(); // delete the top element
-          int v1_index = pair.v1_index;
-          int v2_index = pair.v2_index;
-          Matrix4f v_Q = vertexes[v1_index].Q + vertexes[v2_index].Q; // v of (v1, v2)
+          int v1_index = pair_delete.v1_index;
+          int v2_index = pair_delete.v2_index;
+          Matrix4f v_Q = vertexes[v1_index].Q + vertexes[v2_index].Q; // new v of (v1, v2)
           // refresh heap
           // find another vertex of planes including v1 and v2
+          int plane1 = pair_delete.triangle_index[0];
+          int plane2 = pair_delete.triangle_index[1];
           int v3_index = -1, v4_index = -1;
           for (int k = 0; k < 3; ++k)
             {
-              if (planes[pair.triangle_index[0]].vertex_index[k] != v1_index && planes[pair.triangle_index[0]].vertex_index[k] != v2_index) v3_index = planes[pair.triangle_index[0]].vertex_index[k];
-              if (planes[pair.triangle_index[1]].vertex_index[k] != v1_index && planes[pair.triangle_index[1]].vertex_index[k] != v2_index) v4_index = planes[pair.triangle_index[1]].vertex_index[k];
+              if (planes[plane1].vertex_index[k] != v1_index && planes[plane1].vertex_index[k] != v2_index) v3_index = planes[plane1].vertex_index[k];
+              if (plane2 != -1 && planes[plane2].vertex_index[k] != v1_index && planes[plane2].vertex_index[k] != v2_index) v4_index = planes[plane2].vertex_index[k];
             }
           if (v3_index < 0) Error("No plane of this edge!!!\n");
 
@@ -117,9 +122,8 @@ void CPairContraction::Iteration()
           // swap heap and new heap
           heap.swap(new_heap);
 
-          // !!!!!!!!!!!!TODO: Modify, some edges only have one plane!!!
-
           //refresh vertex, modify friend_index/pairs_index
+          m_nVertices--;
           vertexes[v2_index].is_active = false;
           vertexes[v1_index].Q += vertexes[v2_index].Q;
           vertexes[v1_index].v = ComputeV(vertexes[v1_index].Q);
@@ -134,9 +138,14 @@ void CPairContraction::Iteration()
               vertexes[index].pairs_index.erase (vertexes[index].pairs_index.begin() + m);
             }
 
-          //refresh plane (one iteration decrease two planes, one vertex)
-          planes[pair.triangle_index[0]].is_active = false;
-          planes[pair.triangle_index[1]].is_active = false;
+          //refresh plane (one iteration decrease one/two planes, one vertex)
+          planes[plane1].is_active = false;
+          m_nTriangles--;
+          if (plane2 != -1) // two planes
+            {
+              planes[plane2].is_active = false;
+              m_nTriangles--;
+            }
           //modify all planes including v2_index to v1_index
           for (int j = 0; j < vertexes[v2_index].pairs_index.size(); ++j)
             {
@@ -145,7 +154,7 @@ void CPairContraction::Iteration()
                   for (int k = 0; k < 3; ++k)
                     if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].vertex_index[k] == v2_index) planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].vertex_index[k] = v1_index;
                 }
-              if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].is_active == true) // not deleted triangles
+              if (pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1] != -1 && planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].is_active == true) // not deleted triangles
                 {
                   for (int k = 0; k < 3; ++k)
                     if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].vertex_index[k] == v2_index) planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].vertex_index[k] = v1_index;
@@ -220,6 +229,16 @@ int CPairContraction::IsInPairs(int v, Pairs pair)
   if (v1 == v) return 0;
   else if (v2 == v) return 1;
   else return -1;
+}
+
+void CPairContraction::RefreshIndex()
+{
+  // if vertex's is_active == false, swap this vertex with the last one, size--,
+  for (int i = 0; i < vertexes.size(); ++i)
+    {
+      //if (vertexes[i].is_active == false)
+
+    }
 }
 
 void CPairContraction::Run()

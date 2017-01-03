@@ -47,7 +47,7 @@ typedef std::priority_queue<float,std::vector<Pairs>,mycomparison> Heap;
 class CPairContraction
 {
  public:
- CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList, float ratio): m_nVertices(m_nVertices), m_nTriangles(m_nTriangles), ratio(ratio) {
+ CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList, float ratio): m_nVertices(m_nVertices), m_nTriangles(m_nTriangles), m_nTriangles_new(floor(ratio * m_nTriangles)) {
     for (int i = 0; i < m_nVertices; ++i)
       {
         Vertex vertex;
@@ -101,5 +101,5 @@ class CPairContraction
   std::vector<Vertex> vertexes; // all vertexes
   std::vector<Pairs> pairs; // all pairs
   Heap heap; // minimum cost is always on the top
-  float ratio; // ratio of area
+  int m_nTriangles_new; // size of triangles after simplified
 };
