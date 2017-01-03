@@ -20,9 +20,9 @@ struct Vertex // for write
 
 struct Pairs
 {
-  int v1_index, v2_index; // TODO: could only save index
+  int v1_index, v2_index; // TODO: modify to []
   float cost; // TODO: add Vertex v???
-  int triangle_index[2]; // index of triangle including these two vertexes, size should be 2
+  int triangle_index[2]; // index of triangle including these two vertexes, general:size should be 2, also could be 1
 };
 
 struct Plane // for write
@@ -82,8 +82,10 @@ class CPairContraction
   void Iteration();
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
   void RefreshIndex(); // refresh index of vertexes and planes(for write model)
+  void Error(std::string error);
 
   void Run();
+  int IsInPairs(int v_index, Pairs pair); // verify one vertex is in a pair, if in, return index
 
   // for test
   void PrintMatrix(Matrix4f M) {

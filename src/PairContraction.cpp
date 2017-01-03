@@ -44,7 +44,7 @@ void CPairContraction::BuildHeap()
 
 void CPairContraction::Iteration()
 {
-  int iter_num = ceil((1 - ratio) * m_nTriangles / 2);
+  int iter_num = ceil((1 - ratio) * m_nTriangles / 2); // TODO: need modify, some edge only have one plane
   for (int i = 0; i < iter_num; ++i)
     {
       if (heap.empty())
@@ -58,10 +58,66 @@ void CPairContraction::Iteration()
           heap.pop(); // delete the top element
           int v1_index = pair.v1_index;
           int v2_index = pair.v2_index;
+          Matrix4f v_Q = vertexes[v1_index].Q + vertexes[v2_index].Q; // v of (v1, v2)
           // refresh heap
+          // find another vertex of planes including v1 and v2
+          int v3_index = -1, v4_index = -1;
+          for (int k = 0; k < 3; ++k)
+            {
+              if (planes[pair.triangle_index[0]].vertex_index[k] != v1_index && planes[pair.triangle_index[0]].vertex_index[k] != v2_index) v3_index = planes[pair.triangle_index[0]].vertex_index[k];
+              if (planes[pair.triangle_index[1]].vertex_index[k] != v1_index && planes[pair.triangle_index[1]].vertex_index[k] != v2_index) v4_index = planes[pair.triangle_index[1]].vertex_index[k];
+            }
+          if (v3_index < 0) Error("No plane of this edge!!!\n");
 
+          Heap new_heap;
+          while (!heap.empty()) // traverse heap
+            {
+              Pairs pair = heap.top(); // get one pair from this heap
+              heap.pop();
+              // if v1 in this pair
+              int id = IsInPairs(v1_index, pair);
+              if (id >= 0)
+                {
+                  // TODO: use operator
+                  Pairs new_pair;
+                  new_pair.v1_index = pair.v1_index;
+                  new_pair.v2_index = pair.v2_index;
+                  new_pair.triangle_index[0] = pair.triangle_index[0];
+                  new_pair.triangle_index[1] = pair.triangle_index[1];
+                  if (id == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v1
+                  else new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v1
+                  new_heap.push(new_pair);
+                }
 
+              // if v2 in this pair
+              id = IsInPairs(v2_index, pair);
+              if (id >= 0)
+                {
+                  int another_index = -1;
+                  if (id == 0)
+                    another_index = pair.v2_index;
+                  else
+                    another_index = pair.v1_index;
+                  if (another_index < 0) Error("Pairs no two vertexes...\n");
+                  if (another_index != v3_index && another_index != v4_index)
+                    {
+                      Pairs new_pair;
+                      if (pair.v1_index == v2_index) new_pair.v1_index = v1_index;
+                      else new_pair.v1_index = pair.v1_index;
+                      if (pair.v2_index == v2_index) new_pair.v2_index = v1_index;
+                      else new_pair.v2_index = pair.v2_index;
+                      new_pair.triangle_index[0] = pair.triangle_index[0];
+                      new_pair.triangle_index[1] = pair.triangle_index[1];
+                      if (id == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v2
+                      else new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v2
+                      new_heap.push(new_pair);
+                    }
+                }
+            }
+          // swap heap and new heap
+          heap.swap(new_heap);
 
+          // !!!!!!!!!!!!TODO: Modify, some edges only have one plane!!!
 
           //refresh vertex, modify friend_index/pairs_index
           vertexes[v2_index].is_active = false;
@@ -73,10 +129,7 @@ void CPairContraction::Iteration()
               int m = 0;
               while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
               if (m == vertexes[index].friend_index.size())
-                {
-                  std::cout << "Cannot find v2 in friend_index, maybe some errors...";
-                  exit(1);
-                }
+                Error("Cannot find v2 in friend_index, maybe some errors...\n");
               vertexes[index].friend_index.erase (vertexes[index].friend_index.begin() + m);
               vertexes[index].pairs_index.erase (vertexes[index].pairs_index.begin() + m);
             }
@@ -108,6 +161,7 @@ void CPairContraction::CreatePairs(int v1_index, int v2_index, int index)
   pair.v1_index = v1_index;
   pair.v2_index = v2_index;
   pair.triangle_index[0] = index;
+  pair.triangle_index[1] = -1; // if an edge only belongs to one plane, it doesn't have second triangle
   pair.cost = ComputeCost(vertexes[v1_index].Q, vertexes[v2_index].Q);
   pairs.push_back(pair);
 }
@@ -159,6 +213,15 @@ void CPairContraction::SelectPairs()
     }
 }
 
+int CPairContraction::IsInPairs(int v, Pairs pair)
+{
+  int v1 = pair.v1_index;
+  int v2 = pair.v2_index;
+  if (v1 == v) return 0;
+  else if (v2 == v) return 1;
+  else return -1;
+}
+
 void CPairContraction::Run()
 {
   SelectPairs();
@@ -166,4 +229,10 @@ void CPairContraction::Run()
   Iteration();
   RefreshIndex();
   // output obj with vertexes and planes
+}
+
+void CPairContraction::Error(std::string error)
+{
+  std::cout << error;
+  exit(1);
 }
