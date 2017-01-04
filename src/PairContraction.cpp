@@ -50,11 +50,7 @@ void CPairContraction::Iteration()
 {
   while(m_nTriangles > m_nTriangles_new)
     {
-      if (heap.empty())
-        {
-          std::cout << "Heap is empty now! Maybe some errors!\n";
-          exit(1);
-        }
+      if (heap.empty()) Error("Heap is empty now! Maybe some errors!\n");
       else
         {
           Pairs pair_delete = heap.top();
@@ -80,8 +76,8 @@ void CPairContraction::Iteration()
               Pairs pair = heap.top(); // get one pair from this heap
               heap.pop();
               // if v1 in this pair
-              int id = IsInPairs(v1_index, pair);
-              if (id >= 0)
+              int id1 = IsInPairs(v1_index, pair);
+              if (id1 >= 0)
                 {
                   // TODO: use operator
                   Pairs new_pair;
@@ -89,17 +85,17 @@ void CPairContraction::Iteration()
                   new_pair.v2_index = pair.v2_index;
                   new_pair.triangle_index[0] = pair.triangle_index[0];
                   new_pair.triangle_index[1] = pair.triangle_index[1];
-                  if (id == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v1
+                  if (id1 == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v1
                   else new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v1
                   new_heap.push(new_pair);
                 }
 
               // if v2 in this pair
-              id = IsInPairs(v2_index, pair);
-              if (id >= 0)
+              int id2 = IsInPairs(v2_index, pair);
+              if (id2 >= 0)
                 {
                   int another_index = -1;
-                  if (id == 0)
+                  if (id2 == 0)
                     another_index = pair.v2_index;
                   else
                     another_index = pair.v1_index;
@@ -113,11 +109,12 @@ void CPairContraction::Iteration()
                       else new_pair.v2_index = pair.v2_index;
                       new_pair.triangle_index[0] = pair.triangle_index[0];
                       new_pair.triangle_index[1] = pair.triangle_index[1];
-                      if (id == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v2
+                      if (id2 == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v2
                       else new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v2
                       new_heap.push(new_pair);
                     }
                 }
+              if (id1 == -1 && id2 == -1) new_heap.push(pair);
             }
           // swap heap and new heap
           heap.swap(new_heap);
@@ -231,13 +228,73 @@ int CPairContraction::IsInPairs(int v, Pairs pair)
   else return -1;
 }
 
-void CPairContraction::RefreshIndex()
+void CPairContraction::RefreshIndex(int &object_nVertices, int &object_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList)
 {
   // if vertex's is_active == false, swap this vertex with the last one, size--,
+  int k = 0; // record deleted number
+  std::vector<int> new_index;
+  for (int i = 0; i < vertexes.size(); ++i) new_index.push_back(i); // old index
+  // refresh vertexes
   for (int i = 0; i < vertexes.size(); ++i)
     {
-      //if (vertexes[i].is_active == false)
+      if (!vertexes[i].is_active)
+        {
+          k++;
+          new_index[i] = -1;
+        }
+      else
+        {
+          new_index[i] -= k;
+        }
+    }
+  for (int i = 0; i < vertexes.size(); ++i)
+    {
+      if (new_index[i] >= 0) vertexes[new_index[i]] = vertexes[i];
+    }
+  vertexes.resize(vertexes.size()-k);
 
+  //refresh planes
+  k = 0;
+  std::vector<int> new_index_plane;
+  for (int i = 0; i < planes.size(); ++i) new_index_plane.push_back(i); // old index
+  for (int i = 0; i < planes.size(); ++i)
+    {
+      if (!planes[i].is_active)
+        {
+          k++;
+          new_index_plane[i] = -1;
+        }
+      else
+        {
+          // modify index of vertexes in this plane
+          for (int j = 0; j < 3; ++j)
+            {
+              if (new_index[planes[i].vertex_index[j]] == -1) Error("Strange!\n");
+              planes[i].vertex_index[j] = new_index[planes[i].vertex_index[j]];
+            }
+          new_index_plane[i] -= k;
+        }
+    }
+  for (int i = 0; i < planes.size(); ++i)
+    {
+      if (new_index_plane[i] >= 0) planes[new_index_plane[i]] = planes[i];
+    }
+  planes.resize(planes.size()-k);
+
+  // create new m_pVertexList, m_pTriangleList
+  object_nVertices = m_nVertices;
+  object_nTriangles = m_nTriangles;
+  for (int i = 0; i < m_nVertices; ++i)
+    {
+      m_pVertexList[i][0] = vertexes[i].v[0];
+      m_pVertexList[i][1] = vertexes[i].v[1];
+      m_pVertexList[i][2] = vertexes[i].v[2];
+    }
+  for (int i = 0; i < m_nTriangles; ++i)
+    {
+      m_pTriangleList[i][0] = planes[i].vertex_index[0];
+      m_pTriangleList[i][1] = planes[i].vertex_index[1];
+      m_pTriangleList[i][2] = planes[i].vertex_index[2];
     }
 }
 
@@ -246,7 +303,7 @@ void CPairContraction::Run()
   SelectPairs();
   BuildHeap();
   Iteration();
-  RefreshIndex();
+  std::cout << "New Vertex Number = " << m_nVertices << "\nNew Triangle Number = " << m_nTriangles << std::endl;
   // output obj with vertexes and planes
 }
 

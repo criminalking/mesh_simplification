@@ -2,7 +2,7 @@
 #OPENCV_C_FLAGS := $(shell pkg-config --cflags opencv)
 
 GXX := clang++
-BIN_NAME := main
+BIN_NAME := main.out
 CPP_FILES := $(wildcard src/*.cpp)
 
 build:
