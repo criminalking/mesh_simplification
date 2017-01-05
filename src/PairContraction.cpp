@@ -20,11 +20,14 @@ Vector4f CPairContraction::ComputeV(Matrix4f Q)
   Matrix4f M;
   M << Q(0,0), Q(0,1), Q(0,2), Q(0,3), Q(0,1), Q(1,1), Q(1,2), Q(1,3), Q(0,2), Q(1,2), Q(2,2), Q(2,3), 0, 0, 0, 1;
   Vector4f vec(0,0,0,1);
-  float determinant = M.determinant();
-  Vector4f v;
-  if (determinant > 1e-6) // not singular
-    v = M.inverse() * vec;
-  else Error("Matrix is singular!!!\n"); // TODO: if singular, how should do?
+  //solve Mv=vec
+  ColPivHouseholderQR<Matrix4f> dec(M); // not invertible is also ok
+  Vector4f v = dec.solve(vec);
+  // float determinant = M.determinant();
+  // Vector4f v2;
+  // if (determinant > 1e-6) // not singular
+  //    v2 = M.inverse() * vec;
+  // else Error("Matrix is singular!!!\n"); // TODO: if singular, how should do?
   return v;
 }
 
@@ -44,6 +47,7 @@ void CPairContraction::BuildHeap()
     {
       heap.push(pairs[i]);
     }
+  // already verified: no repeat
 }
 
 void CPairContraction::Iteration()
@@ -53,10 +57,16 @@ void CPairContraction::Iteration()
       if (heap.empty()) Error("Heap is empty now! Maybe some errors!\n");
       else
         {
+          int begin = heap.size();
+          std::cout << heap.size() << "size begin\n";
           Pairs pair_delete = heap.top();
           heap.pop(); // delete the top element
+
           int v1_index = pair_delete.v1_index;
           int v2_index = pair_delete.v2_index;
+
+          std::cout << "v1: "<< v1_index <<"," << "v2: " <<  v2_index << std::endl;
+
           Matrix4f v_Q = vertexes[v1_index].Q + vertexes[v2_index].Q; // new v of (v1, v2)
           // refresh heap
           // find another vertex of planes including v1 and v2
@@ -68,16 +78,59 @@ void CPairContraction::Iteration()
               if (planes[plane1].vertex_index[k] != v1_index && planes[plane1].vertex_index[k] != v2_index) v3_index = planes[plane1].vertex_index[k];
               if (plane2 != -1 && planes[plane2].vertex_index[k] != v1_index && planes[plane2].vertex_index[k] != v2_index) v4_index = planes[plane2].vertex_index[k];
             }
-          if (v3_index < 0) Error("No plane of this edge!!!\n");
+          if (v3_index < 0)
+            {
+              Error("No plane of this edge!!!\n");
+            }
 
+          std::cout << "v3: "<< v3_index << "," << "v4: " <<  v4_index << std::endl;
+
+          int plane13_0 = -1, plane13_1 = -1, plane14_0 = -1, plane14_1 = -1;
           Heap new_heap;
           while (!heap.empty()) // traverse heap
             {
               Pairs pair = heap.top(); // get one pair from this heap
               heap.pop();
-              // if v1 in this pair
-              int id1 = IsInPairs(v1_index, pair);
-              if (id1 >= 0)
+
+              if (IsThisPair(v1_index, v2_index, pair)) std::cout << v1_index << v2_index<< "first" <<std::endl; // check
+
+              // if pair = (v1, v3)
+              if (IsThisPair(v1_index, v3_index, pair))
+                {
+                  std::cout << "13\n";
+                  if (IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[0])) plane13_0 = pair.triangle_index[0]; // this plane is (v1, v2, v3)
+                  else if (IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[1])) plane13_0 = pair.triangle_index[1];
+                }
+              // if pair = (v1, v4) TODO: need consider -1
+              else if (IsThisPair(v1_index, v4_index, pair))
+                {
+                  std::cout << "14\n";
+                  if (IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[0])) plane14_0 = pair.triangle_index[0];
+                  else if (IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[1])) plane14_0 = pair.triangle_index[1];
+                }
+              // if pair = (v2, v3)
+              else if (IsThisPair(v2_index, v3_index, pair))
+                {
+                  std::cout << "23\n";
+                  if (!IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[0])) plane13_1 = pair.triangle_index[0];
+                  else if (!IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[1])) plane13_1 = pair.triangle_index[1];
+
+                  if (plane13_1 == -1)
+                    {
+                      PrintPlane(pair.triangle_index[0]);
+                      PrintPlane(pair.triangle_index[0]);
+                    }
+
+                }
+              // if pair = (v2, v4)
+              else if (IsThisPair(v2_index, v4_index, pair))
+                {
+                  std::cout << "24\n";
+                  if (!IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[0])) plane14_1 = pair.triangle_index[0];
+                  else if (!IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[1])) plane14_1 = pair.triangle_index[1];
+                }
+              // if v1 in this pair && another vertex is not v3 or v4
+              else if (v1_index == pair.v1_index || v1_index == pair.v2_index)
                 {
                   // TODO: use operator
                   Pairs new_pair;
@@ -85,54 +138,97 @@ void CPairContraction::Iteration()
                   new_pair.v2_index = pair.v2_index;
                   new_pair.triangle_index[0] = pair.triangle_index[0];
                   new_pair.triangle_index[1] = pair.triangle_index[1];
-                  if (id1 == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v1
-                  else new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v1
+
+                  if (v1_index == pair.v1_index) // v1 is in the first place
+                    {
+                      new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v1
+                    }
+                  else // v1 is in the second place
+                    {
+                      new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v1
+                    }
                   new_heap.push(new_pair);
                 }
 
-              // if v2 in this pair
-              int id2 = IsInPairs(v2_index, pair);
-              if (id2 >= 0)
+              // if v2 in this pair && another vertex is not v3 or v4
+              else if (v2_index == pair.v1_index || v2_index == pair.v2_index)
                 {
-                  int another_index = -1;
-                  if (id2 == 0)
-                    another_index = pair.v2_index;
-                  else
-                    another_index = pair.v1_index;
-                  if (another_index < 0) Error("Pairs no two vertexes...\n");
-                  if (another_index != v3_index && another_index != v4_index)
+                  Pairs new_pair;
+                  if (v2_index == pair.v1_index) // v2 is in the first place
                     {
-                      Pairs new_pair;
-                      if (pair.v1_index == v2_index) new_pair.v1_index = v1_index;
-                      else new_pair.v1_index = pair.v1_index;
-                      if (pair.v2_index == v2_index) new_pair.v2_index = v1_index;
-                      else new_pair.v2_index = pair.v2_index;
-                      new_pair.triangle_index[0] = pair.triangle_index[0];
-                      new_pair.triangle_index[1] = pair.triangle_index[1];
-                      if (id2 == 0) new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v2
-                      else new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v2
-                      new_heap.push(new_pair);
+                      new_pair.v1_index = v1_index;
+                      new_pair.v2_index = pair.v2_index;
+                      new_pair.cost = ComputeCost(v_Q, vertexes[pair.v2_index].Q); // use v instead of v2
                     }
+                  else if (v2_index == pair.v2_index) // v2 is in the second place
+                    {
+                      new_pair.v1_index = pair.v1_index;
+                      new_pair.v2_index = v1_index;
+                      new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v2
+                    }
+                  new_pair.triangle_index[0] = pair.triangle_index[0];
+                  new_pair.triangle_index[1] = pair.triangle_index[1];
+                  // change v2 to v1
+                  for (int k = 0; k < 3; ++k)
+                    {
+                      if (planes[pair.triangle_index[0]].vertex_index[k] == v2_index) planes[pair.triangle_index[0]].vertex_index[k] = v1_index;
+                      if (planes[pair.triangle_index[1]].vertex_index[k] == v2_index) planes[pair.triangle_index[1]].vertex_index[k] = v1_index;
+                    }
+                  new_heap.push(new_pair);
                 }
-              if (id1 == -1 && id2 == -1) new_heap.push(pair);
+              else new_heap.push(pair);
             }
           // swap heap and new heap
           heap.swap(new_heap);
+
+          // push (v1,v3) && (v1,v4)
+          if (plane13_0 == -1 || plane13_1 == -1)
+            Error("13 == -1\n");
+          Pairs pair13;
+          pair13.v1_index = v1_index; pair13.v2_index = v3_index;
+          pair13.cost = ComputeCost(v_Q, vertexes[v3_index].Q);
+          pair13.triangle_index[0] = plane13_0; pair13.triangle_index[1] = plane13_1;
+          heap.push(pair13);
+          if (v4_index != -1)
+            {
+              Pairs pair14;
+              pair14.v1_index = v1_index; pair14.v2_index = v4_index;
+              pair14.cost = ComputeCost(v_Q, vertexes[v4_index].Q);
+              pair14.triangle_index[0] = plane14_0; pair14.triangle_index[1] = plane14_1;
+              heap.push(pair14);
+            }
+
+          int end = heap.size();
+          std::cout << heap.size() << "size end\n";
+          if (begin - end < 3) std::cout << v4_index << "v4\n";
 
           //refresh vertex, modify friend_index/pairs_index
           m_nVertices--;
           vertexes[v2_index].is_active = false;
           vertexes[v1_index].Q += vertexes[v2_index].Q;
           vertexes[v1_index].v = ComputeV(vertexes[v1_index].Q);
+          //delete v2 in his friends' f_i(including v1)
           for (int k = 0; k < vertexes[v2_index].friend_index.size(); ++k)
             {
               int index = vertexes[v2_index].friend_index[k];
-              int m = 0;
-              while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
-              if (m == vertexes[index].friend_index.size())
-                Error("Cannot find v2 in friend_index, maybe some errors...\n");
-              vertexes[index].friend_index.erase (vertexes[index].friend_index.begin() + m);
-              vertexes[index].pairs_index.erase (vertexes[index].pairs_index.begin() + m);
+
+              if (index == v1_index || index == v3_index || index == v4_index) // friend is v1,v3,v4
+                {
+                  // delete v2 in v1,v3,v4
+                  int m = 0;
+                  while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
+                  if (m == vertexes[index].friend_index.size())
+                    Error("Cannot find v2 in friend_index, maybe some errors...\n");
+                  vertexes[index].friend_index.erase(vertexes[index].friend_index.begin() + m);
+                }
+              else // change v2 to v1 in them, add them in v1
+                {
+                  int m = 0;
+                  while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
+                  if (m == vertexes[index].friend_index.size()) Error("Cannot find v2 in friend_index, maybe some errors...\n");
+                  vertexes[index].friend_index[m] = v1_index;
+                  vertexes[v1_index].friend_index.push_back(index);
+                }
             }
 
           //refresh plane (one iteration decrease one/two planes, one vertex)
@@ -143,22 +239,27 @@ void CPairContraction::Iteration()
               planes[plane2].is_active = false;
               m_nTriangles--;
             }
-          //modify all planes including v2_index to v1_index
-          for (int j = 0; j < vertexes[v2_index].pairs_index.size(); ++j)
-            {
-              if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].is_active == true) // not deleted triangles
-                {
-                  for (int k = 0; k < 3; ++k)
-                    if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].vertex_index[k] == v2_index) planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[0]].vertex_index[k] = v1_index;
-                }
-              if (pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1] != -1 && planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].is_active == true) // not deleted triangles
-                {
-                  for (int k = 0; k < 3; ++k)
-                    if (planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].vertex_index[k] == v2_index) planes[pairs[vertexes[v2_index].pairs_index[j]].triangle_index[1]].vertex_index[k] = v1_index;
-                }
-            }
         }
     }
+}
+
+bool CPairContraction::PointInPlane(int v_index, int p_index)
+{
+  if (planes[p_index].vertex_index[0] == v_index || planes[p_index].vertex_index[1] == v_index || planes[p_index].vertex_index[2] == v_index) return true;
+  else return false;
+}
+
+bool CPairContraction::IsThisPair(int v1, int v2, Pairs pair)
+{
+  if ((v1 == pair.v1_index && v2 == pair.v2_index) || (v1 == pair.v2_index && v2 == pair.v1_index)) return true;
+  else return false;
+}
+
+bool CPairContraction::IsThisPlane(int v1, int v2, int v3, int plane)
+{
+  if (PointInPlane(v1, plane) && PointInPlane(v2, plane) && PointInPlane(v3, plane))
+    return true;
+  else return false;
 }
 
 void CPairContraction::CreatePairs(int v1_index, int v2_index, int index)
@@ -176,9 +277,11 @@ void CPairContraction::AddPairs(int v1_index, int v2_index, int triangle_index)
 {
   if (!vertexes[v1_index].friend_index.empty()) // list is not empty
     {
-      // search if v2 in lists
-      std::vector<int>::iterator iter = std::find (vertexes[v1_index].friend_index.begin(), vertexes[v1_index].friend_index.end(), v2_index);
-      if (iter == vertexes[v1_index].friend_index.end()) // not find v2
+      // search if v2 in v1's lists
+      int index = vertexes[v1_index].friend_index.size();
+      for (int i = 0; i < vertexes[v1_index].friend_index.size(); ++i)
+        if (vertexes[v1_index].friend_index[i] == v2_index) index = i;
+      if (index == vertexes[v1_index].friend_index.size()) // not find v2
         {
           vertexes[v1_index].friend_index.push_back(v2_index); // add v2 to v1'friend_index
           vertexes[v1_index].pairs_index.push_back(pairs.size());
@@ -188,7 +291,6 @@ void CPairContraction::AddPairs(int v1_index, int v2_index, int triangle_index)
         }
       else // find v2, add plane_index in triangle_index
         {
-          int index = std::distance(vertexes[v1_index].friend_index.begin(), iter); // index of this friend in this Vertex
           pairs[vertexes[v1_index].pairs_index[index]].triangle_index[1] = triangle_index;
         }
     }
@@ -204,6 +306,8 @@ void CPairContraction::AddPairs(int v1_index, int v2_index, int triangle_index)
 
 void CPairContraction::SelectPairs()
 {
+  std::clock_t start;
+  start = std::clock();
   for (int i = 0; i < m_nTriangles; ++i)
     {
       int v1_index = planes[i].vertex_index[0];
@@ -217,15 +321,8 @@ void CPairContraction::SelectPairs()
       // add v2 && v3, go to v2
       AddPairs(v2_index, v3_index, i);
     }
-}
-
-int CPairContraction::IsInPairs(int v, Pairs pair)
-{
-  int v1 = pair.v1_index;
-  int v2 = pair.v2_index;
-  if (v1 == v) return 0;
-  else if (v2 == v) return 1;
-  else return -1;
+  double duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+  std::cout<<"time: "<< duration <<'\n';
 }
 
 void CPairContraction::RefreshIndex(int &object_nVertices, int &object_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList)

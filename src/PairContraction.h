@@ -6,6 +6,7 @@
 #include <Eigen/Sparse>
 #include <vector>
 #include <queue>          // std::priority_queue
+#include <ctime>
 
 using namespace Eigen;
 
@@ -14,7 +15,7 @@ struct Vertex // for write
   Vector4f v; // value of this vertex
   Matrix4f Q; // Q
   std::vector<int> friend_index; // another vertex of a pair including this vertex
-  std::vector<int> pairs_index; // index of pairs including vertex and friend vertex
+  std::vector<int> pairs_index; // index of pairs including vertex and friend vertex, TODO: not sure whether need
   bool is_active; // true: simplified model should include this vertex
 };
 
@@ -80,12 +81,14 @@ class CPairContraction
   void AddPairs(int v1_index, int v2_index, int triangle_index); //
   void BuildHeap(); // build pairs heap
   void Iteration();
+  bool IsThisPair(int v1, int v2, Pairs pair);
+  bool PointInPlane(int v_index, int p_index); // detect one vertex is in plane or not
+  bool IsThisPlane(int v1, int v2, int v3, int plane);
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
   void RefreshIndex(int &object_nVertices, int &object_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList); // refresh index of vertexes and planes(for write model)
   void Error(std::string error);
 
   void Run();
-  int IsInPairs(int v_index, Pairs pair); // verify one vertex is in a pair, if in, return index
 
   // for test
   void PrintMatrix(Matrix4f M) {
@@ -93,7 +96,13 @@ class CPairContraction
       std::cout << M(i) << "   ";
   }
 
-
+  void PrintPlane(int plane) {
+    for (int i = 0; i < 3; i++)
+      {
+        std::cout << planes[plane].vertex_index[i] << "  ";
+      }
+    std::cout << "Plane" << std::endl;
+  }
 
  private:
   int m_nVertices;
