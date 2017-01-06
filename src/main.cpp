@@ -6,7 +6,7 @@
 int main()
 {
   SimpleOBJ::CSimpleObject object;
-  object.LoadFromObj("obj/block.obj"); // . is the address of Makefile
+  object.LoadFromObj("obj/sphere.obj"); // . is the address of Makefile
   CPairContraction simplified_obj(object.m_nVertices, object.m_nTriangles, object.m_pVertexList, object.m_pTriangleList, 0.5);
   // TODO: verify ratio is valid or not
   simplified_obj.Run();

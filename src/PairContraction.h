@@ -14,8 +14,8 @@ struct Vertex // for write
 {
   Vector4f v; // value of this vertex
   Matrix4f Q; // Q
-  std::vector<int> friend_index; // another vertex of a pair including this vertex
-  std::vector<int> pairs_index; // index of pairs including vertex and friend vertex, TODO: not sure whether need
+  std::vector<int> friend_index; // another vertex of a pair including this vertex(just for building heap)
+  std::vector<int> pairs_index; // index of pairs including vertex and friend vertex(just for building heap)
   bool is_active; // true: simplified model should include this vertex
 };
 
@@ -102,6 +102,21 @@ class CPairContraction
         std::cout << planes[plane].vertex_index[i] << "  ";
       }
     std::cout << "Plane" << std::endl;
+  }
+
+  int FindOnePair(Pairs pair)
+  {
+    int k = 0;
+    Heap temp;
+    while(!heap.empty())
+      {
+        Pairs p = heap.top();
+        heap.pop();
+        temp.push(p);
+        if (IsThisPair(p.v1_index, p.v2_index, pair)) k++;
+      }
+    heap.swap(temp);
+    return k;
   }
 
  private:

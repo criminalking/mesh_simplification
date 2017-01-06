@@ -85,6 +85,22 @@ void CPairContraction::Iteration()
 
           std::cout << "v3: "<< v3_index << "," << "v4: " <<  v4_index << std::endl;
 
+
+          //refresh vertex, modify friend_index/pairs_index
+          m_nVertices--;
+          vertexes[v2_index].is_active = false;
+          vertexes[v1_index].Q += vertexes[v2_index].Q;
+          vertexes[v1_index].v = ComputeV(vertexes[v1_index].Q);
+
+          //refresh plane (one iteration decrease one/two planes, one vertex)
+          planes[plane1].is_active = false;
+          m_nTriangles--;
+          if (plane2 != -1) // two planes
+            {
+              planes[plane2].is_active = false;
+              m_nTriangles--;
+            }
+
           int plane13_0 = -1, plane13_1 = -1, plane14_0 = -1, plane14_1 = -1;
           Heap new_heap;
           while (!heap.empty()) // traverse heap
@@ -92,21 +108,21 @@ void CPairContraction::Iteration()
               Pairs pair = heap.top(); // get one pair from this heap
               heap.pop();
 
-              if (IsThisPair(v1_index, v2_index, pair)) std::cout << v1_index << v2_index<< "first" <<std::endl; // check
+              if (IsThisPair(v1_index, v2_index, pair)) std::cout << v1_index << v2_index<< "  Repeat v1 v2.\n"; // check repeat
 
               // if pair = (v1, v3)
               if (IsThisPair(v1_index, v3_index, pair))
                 {
                   std::cout << "13\n";
-                  if (IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[0])) plane13_0 = pair.triangle_index[0]; // this plane is (v1, v2, v3)
-                  else if (IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[1])) plane13_0 = pair.triangle_index[1];
+                  if (!IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[0])) plane13_0 = pair.triangle_index[0]; // this plane is (v1, v2, v3)
+                  else if (!IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[1])) plane13_0 = pair.triangle_index[1];
                 }
               // if pair = (v1, v4) TODO: need consider -1
               else if (IsThisPair(v1_index, v4_index, pair))
                 {
                   std::cout << "14\n";
-                  if (IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[0])) plane14_0 = pair.triangle_index[0];
-                  else if (IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[1])) plane14_0 = pair.triangle_index[1];
+                  if (!IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[0])) plane14_0 = pair.triangle_index[0];
+                  else if (!IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[1])) plane14_0 = pair.triangle_index[1];
                 }
               // if pair = (v2, v3)
               else if (IsThisPair(v2_index, v3_index, pair))
@@ -115,12 +131,14 @@ void CPairContraction::Iteration()
                   if (!IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[0])) plane13_1 = pair.triangle_index[0];
                   else if (!IsThisPlane(v1_index, v2_index, v3_index, pair.triangle_index[1])) plane13_1 = pair.triangle_index[1];
 
-                  if (plane13_1 == -1)
+                  // change v2 to v1
+                  if (plane13_1 != -1)
                     {
-                      PrintPlane(pair.triangle_index[0]);
-                      PrintPlane(pair.triangle_index[0]);
+                      for (int k = 0; k < 3; ++k)
+                        {
+                          if (planes[plane13_1].vertex_index[k] == v2_index) planes[plane13_1].vertex_index[k] = v1_index;
+                        }
                     }
-
                 }
               // if pair = (v2, v4)
               else if (IsThisPair(v2_index, v4_index, pair))
@@ -128,6 +146,15 @@ void CPairContraction::Iteration()
                   std::cout << "24\n";
                   if (!IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[0])) plane14_1 = pair.triangle_index[0];
                   else if (!IsThisPlane(v1_index, v2_index, v4_index, pair.triangle_index[1])) plane14_1 = pair.triangle_index[1];
+
+                  // change v2 to v1
+                  if (plane14_1 != -1)
+                    {
+                      for (int k = 0; k < 3; ++k)
+                        {
+                          if (planes[plane14_1].vertex_index[k] == v2_index) planes[plane14_1].vertex_index[k] = v1_index;
+                        }
+                    }
                 }
               // if v1 in this pair && another vertex is not v3 or v4
               else if (v1_index == pair.v1_index || v1_index == pair.v2_index)
@@ -147,6 +174,9 @@ void CPairContraction::Iteration()
                     {
                       new_pair.cost = ComputeCost(v_Q, vertexes[pair.v1_index].Q); // use v instead of v1
                     }
+
+                  if (v1_index == 1160 && v2_index == 1626 && IsThisPair(1186, 1160, new_pair)) std::cout << "Yes in v1\n";
+
                   new_heap.push(new_pair);
                 }
 
@@ -175,8 +205,10 @@ void CPairContraction::Iteration()
                       if (planes[pair.triangle_index[1]].vertex_index[k] == v2_index) planes[pair.triangle_index[1]].vertex_index[k] = v1_index;
                     }
                   new_heap.push(new_pair);
+                  if (v1_index == 1160 && v2_index == 1626 && IsThisPair(1186, 1160, new_pair)) std::cout << "Yes in v2\n";
                 }
-              else new_heap.push(pair);
+              else
+                new_heap.push(pair);
             }
           // swap heap and new heap
           heap.swap(new_heap);
@@ -198,47 +230,25 @@ void CPairContraction::Iteration()
               heap.push(pair14);
             }
 
+          Pairs p;
+          p.v1_index = 2008; p.v2_index = 1626;
+          std::cout << "find one pair  " << FindOnePair(p) << std::endl;
+
           int end = heap.size();
           std::cout << heap.size() << "size end\n";
           if (begin - end < 3) std::cout << v4_index << "v4\n";
 
-          //refresh vertex, modify friend_index/pairs_index
-          m_nVertices--;
-          vertexes[v2_index].is_active = false;
-          vertexes[v1_index].Q += vertexes[v2_index].Q;
-          vertexes[v1_index].v = ComputeV(vertexes[v1_index].Q);
-          //delete v2 in his friends' f_i(including v1)
-          for (int k = 0; k < vertexes[v2_index].friend_index.size(); ++k)
-            {
-              int index = vertexes[v2_index].friend_index[k];
-
-              if (index == v1_index || index == v3_index || index == v4_index) // friend is v1,v3,v4
-                {
-                  // delete v2 in v1,v3,v4
-                  int m = 0;
-                  while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
-                  if (m == vertexes[index].friend_index.size())
-                    Error("Cannot find v2 in friend_index, maybe some errors...\n");
-                  vertexes[index].friend_index.erase(vertexes[index].friend_index.begin() + m);
-                }
-              else // change v2 to v1 in them, add them in v1
-                {
-                  int m = 0;
-                  while (m != vertexes[index].friend_index.size() && vertexes[index].friend_index[m] != v2_index) ++m;
-                  if (m == vertexes[index].friend_index.size()) Error("Cannot find v2 in friend_index, maybe some errors...\n");
-                  vertexes[index].friend_index[m] = v1_index;
-                  vertexes[v1_index].friend_index.push_back(index);
-                }
-            }
-
-          //refresh plane (one iteration decrease one/two planes, one vertex)
-          planes[plane1].is_active = false;
-          m_nTriangles--;
-          if (plane2 != -1) // two planes
-            {
-              planes[plane2].is_active = false;
-              m_nTriangles--;
-            }
+          // check every iteration
+          // check vertex
+          if (vertexes[v2_index].is_active) Error("Check vertex failure!\n");
+          //check plane
+          if (planes[plane1].is_active || planes[plane2].is_active) Error("Check plane failure!");
+          // check pairs
+          Pairs pa,pb,pc;
+          pa.v1_index = v1_index; pa.v2_index = v2_index;
+          pb.v1_index = v2_index; pb.v2_index = v3_index;
+          pc.v1_index = v2_index; pc.v2_index = v4_index;
+          if (FindOnePair(pa) || FindOnePair(pb) || FindOnePair(pc)) Error("Check pairs failure!\n");
         }
     }
 }
