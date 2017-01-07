@@ -85,7 +85,6 @@ void CPairContraction::Iteration()
 
           std::cout << "v3: "<< v3_index << "," << "v4: " <<  v4_index << std::endl;
 
-
           //refresh vertex, modify friend_index/pairs_index
           m_nVertices--;
           vertexes[v2_index].is_active = false;
@@ -272,6 +271,12 @@ bool CPairContraction::IsThisPlane(int v1, int v2, int v3, int plane)
   else return false;
 }
 
+void CPairContraction::Error(std::string error)
+{
+  std::cout << error;
+  exit(1);
+}
+
 void CPairContraction::CreatePairs(int v1_index, int v2_index, int index)
 {
   Pairs pair;
@@ -412,10 +417,4 @@ void CPairContraction::Run()
   Iteration();
   std::cout << "New Vertex Number = " << m_nVertices << "\nNew Triangle Number = " << m_nTriangles << std::endl;
   // output obj with vertexes and planes
-}
-
-void CPairContraction::Error(std::string error)
-{
-  std::cout << error;
-  exit(1);
 }
