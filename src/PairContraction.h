@@ -48,32 +48,7 @@ typedef std::priority_queue<float,std::vector<Pairs>,mycomparison> Heap;
 class CPairContraction
 {
  public:
- CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList, float ratio): m_nVertices(m_nVertices), m_nTriangles(m_nTriangles), m_nTriangles_new(floor(ratio * m_nTriangles)) {
-    for (int i = 0; i < m_nVertices; ++i)
-      {
-        Vertex vertex;
-        vertex.v << m_pVertexList[i][0], m_pVertexList[i][1], m_pVertexList[i][2], 1.0;
-        vertex.Q = Matrix4f::Zero(); // initialize Q
-        vertex.is_active = true;
-        vertexes.push_back(vertex);
-      }
-    for (int i = 0; i < m_nTriangles; ++i)
-      {
-        Plane plane;
-        int v1_index = m_pTriangleList[i][0];
-        int v2_index = m_pTriangleList[i][1];
-        int v3_index = m_pTriangleList[i][2];
-        plane.vertex_index[0] = v1_index;
-        plane.vertex_index[1] = v2_index;
-        plane.vertex_index[2] = v3_index;
-        plane.is_active = true;
-        planes.push_back(plane);
-        Matrix4f Kp = ComputeP(m_pVertexList[v1_index], m_pVertexList[v2_index], m_pVertexList[v3_index]);
-        vertexes[v1_index].Q += Kp;
-        vertexes[v2_index].Q += Kp;
-        vertexes[v3_index].Q += Kp;
-      }
-  }
+  CPairContraction(int m_nVertices, int m_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList, float ratio);
   void SelectPairs();
   float ComputeCost(Matrix4f Q1, Matrix4f Q2); // should verify invertibility
   Vector4f ComputeV(Matrix4f Q); // compute new v
@@ -81,12 +56,12 @@ class CPairContraction
   void AddPairs(int v1_index, int v2_index, int triangle_index); //
   void BuildHeap(); // build pairs heap
   void Iteration();
-  bool IsThisPair(int v1, int v2, Pairs pair);
-  bool PointInPlane(int v_index, int p_index); // detect one vertex is in plane or not
-  bool IsThisPlane(int v1, int v2, int v3, int plane);
+  inline bool IsThisPair(int v1, int v2, Pairs pair);
+  inline bool PointInPlane(int v_index, int p_index); // detect one vertex is in plane or not
+  inline bool IsThisPlane(int v1, int v2, int v3, int plane);
   Matrix4f ComputeP(SimpleOBJ::Vec3f x, SimpleOBJ::Vec3f y, SimpleOBJ::Vec3f z); // compute p for every plane
   void RefreshIndex(int &object_nVertices, int &object_nTriangles, SimpleOBJ::Vec3f* m_pVertexList, SimpleOBJ::Array<int,3>* m_pTriangleList); // refresh index of vertexes and planes(for write model)
-  void Error(std::string error);
+  inline void Error(std::string error);
 
   void Run();
 

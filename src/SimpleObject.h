@@ -6,7 +6,8 @@
 
 namespace SimpleOBJ
 {
-    template <typename T, int N> class Array
+    template <typename T, int N>
+    class Array
     {
     public:
         enum {_len = N};

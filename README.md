@@ -1,8 +1,13 @@
-#Mesh simplification
-##Discription
+# Mesh simplification
 
+## Discription
 
-##Algorithm
-edge-collapse
+Use edge-collapse to simplify mesh.
 
-##Example
+## Usage
+
+make build && make run
+
+## Example
+
+![example](result.png)
